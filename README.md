@@ -34,7 +34,7 @@ To delete a pod:
 ```sh
 kubectl delete pod pod-info-deployment-5cdffc94c-2hbtn -n development
 ```
-## Check the application health
+### Check the application health
 To check application health:
 1. Deploy busybox.yaml to default namespace.
     ```sh
@@ -59,9 +59,59 @@ To check application health:
     The port 3000 is from the Deployment.yaml
     Verify by running cat index.html 
 
-## View Application Logs
+### View Application Logs
 To check the logs of a pod.
 ```sh
 kubectl logs pod-info-deployment-5cdffc94c-9b7z8 -n development
 ```
 
+## Complex Application Deployment
+Use below steps to deploy add a load balancer to the cluster
+### Add load balancer
+Run below command 
+```sh
+kubectl apply -f service.yaml
+```
+This will create a load balancer service. The service forwards the traffic to all the pods that have selector app: pod-info.
+The traffic is sent to the port 3000 on the pod
+Load balancer service allows traffic on port 80. As this is default port, we don't have to specify the port number while accessing the external IP address to this load balancer.
+
+Run below command to get the load balancer and its external IP.
+```sh
+kubectl get services -n development
+```
+
+Try accessing the external IP from the browser to check if the setup.
+
+### Add resource requests and limits
+Add below section in deployment.yaml to add resource requests and limits:
+```sh
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+```
+Then run ```sh kubectl apply -f deployment.yaml``` to update the deployment.
+This is going to terminate all the pods and redeploy.
+
+### Tear down the cluster and all the resources created
+```sh
+$ kubectl delete -f service.yaml 
+service "demo-service" deleted
+
+$ kubectl delete -f deployment.yaml 
+deployment.apps "pod-info-deployment" deleted
+
+$ kubectl delete -f quote.yaml 
+deployment.apps "quote-service" deleted
+
+$ kubectl delete -f busybox.yaml 
+deployment.apps "busybox" deleted
+
+$ kubectl delete -f namespace.yaml 
+namespace "development" deleted
+namespace "production" deleted
+```
